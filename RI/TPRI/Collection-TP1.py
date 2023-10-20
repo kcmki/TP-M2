@@ -1,15 +1,23 @@
 
-files = ["tf-D1.txt","tf-D2.txt","tf-D3.txt","tf-D4.txt"]
+import pickle
 
 
-for f in files:
-    f = open(f).read()
-    f = f.replace("{","").replace("}","")
+files = ["tf-D{}.txt","tf-D{}.txt","tf-D{}.txt","tf-D{}.txt"]
 
-    keynumb = f.split(",")
+Dict = {}
+for i in range(4):
+    
+    with open(files[i].format(i+1),"rb") as file:
+        loaded_dict = pickle.load(file)
+        for key in loaded_dict.keys():
+            Dict[(key,i)] = loaded_dict[key]
 
-    for item in keynumb:
-        key = item.split(":")[0].replace("'","")
-        num = int(item.split(":")[1])
 
-        print("k :",key," Num :",num)
+print(Dict)
+newF = open("Tf-All","wb+")
+pickle.dump(Dict, newF)
+
+
+exit(1)
+
+
