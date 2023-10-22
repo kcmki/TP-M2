@@ -1,0 +1,62 @@
+Knowledge graph (KG) plays an increasingly important role in recommender systems. 
+A recent technical trend is to develop end-to-end models founded on graph neural networks (GNNs). 
+However, existing GNN-based models are coarse-grained in relational modeling, 
+failing to (1) identify user-item relation at a fine-grained level of intents, 
+and (2) exploit relation dependencies to preserve the semantics of long-range connectivity.
+In this study, we explore intents behind a user-item interaction by using auxiliary item knowledge, 
+and propose a new model, Knowledge Graph-based Intent Network (KGIN). Technically, 
+we model each intent as an attentive combination of KG relations, encouraging the independence of different 
+intents for better model capability and interpretability. Furthermore, we devise a new information aggregation 
+scheme for GNN, which recursively integrates the relation sequences of long-range connectivity 
+(i.e., relational paths). This scheme allows us to distill useful information about user intents and encode 
+them into the representations of users and items. Experimental results on three benchmark datasets show that, 
+KGIN achieves significant improvements over the state-of-the-art methods like KGAT [41], s
+KGNN-LS [38], and CKAN [47]. Further analyses show that KGIN offers interpretable explanations 
+for predictions by identifying influential intents and relational paths. 
+In order to model the evolution of user preference, we should learn user-item embeddings based 
+on time-ordered item purchasing sequences, which is defined as Sequential Recommendation~(SR) problem. 
+Existing methods leverage sequential patterns to model item transitions. However, most of them ignore 
+crucial temporal collaborative signals, which are latent in evolving user-item interactions and coexist 
+with sequential patterns. Therefore, we propose to unify sequential patterns and temporal collaborative 
+signals to improve the quality of recommendation, which is rather challenging. Firstly, it is hard to 
+simultaneously encode sequential patterns and collaborative signals. Secondly, it is non-trivial to 
+express the temporal effects of collaborative signals.
+Hence, we design a new framework Temporal Graph Sequential Recommender (TGSRec) upon our defined 
+continuous-time bipartite graph. We propose a novel Temporal Collaborative Transformer TCT layer in TGSRec, 
+which advances the self-attention mechanism by adopting a novel collaborative attention. 
+TCT layer can simultaneously capture collaborative signals from both users and items, 
+as well as considering temporal dynamics inside sequential patterns. We propagate the information learned from TCT 
+layer over the temporal graph to unify sequential patterns and temporal collaborative signals. 
+Empirical results on five datasets show that modelname significantly outperforms other baselines, 
+in average up to 22.5% and 22.1% absolute improvements in Recall@10 and MRR, respectively.
+Motivated by the vast applications of knowledge graph and the increasing 
+demand in education domain, we propose a system, called KnowEdu, to automatically 
+construct knowledge graph for education. By leveraging on heterogeneous data 
+(e.g., pedagogical data and learning assessment data) from the education domain, 
+this system first extracts the concepts of subjects or courses and then identifies 
+the educational relations between the concepts. More specifically, 
+it adopts the neural sequence labeling algorithm on pedagogical data to extract instructional 
+concepts and employs probabilistic association rule mining on learning assessment data to 
+identify the relations with educational significance. We detail all the above mentioned efforts 
+through an exemplary case of constructing a demonstrative knowledge graph for mathematics, 
+where the instructional concepts and their prerequisite relations are derived from curriculum 
+standards and concept-based performance data of students. Evaluation results show that the 
+F1 score for concept extraction exceeds 0.70, and for relation identification, 
+the area under the curve and mean average precision achieve 0.95 and 0.87, respectively.
+Knowledge graph (KG) contains well-structured external information and has shown to be effective for 
+high-quality recommendation. However, existing KG enhanced recommendation methods have largely 
+focused on exploring advanced neural network architectures to better investigate the structural 
+information of KG. While for model learning, these methods mainly rely on Negative Sampling 
+(NS) to optimize the models for both KG embedding task and recommendation task. Since NS is not robust 
+(e.g., sampling a small fraction of negative instances may lose lots of useful information), 
+it is reasonable to argue that these methods are insufficient to capture collaborative information among users, 
+items, and entities. In this paper, we propose a novel Jointly Non-Sampling learning model for Knowledge graph 
+enhanced Recommendation (JNSKR). Specifically, we first design a new efficient NS optimization algorithm 
+for knowledge graph embedding learning. The subgraphs are then encoded by the proposed attentive 
+neural network to better characterize user preference over items. Through novel designs of memorization 
+strategies and joint learning framework, JNSKR not only models the fine-grained connections among users, 
+items, and entities, but also efficiently learns model parameters from the whole training data 
+(including all non-observed data) with a rather low time complexity. Experimental results on two public 
+benchmarks show that JNSKR significantly outperforms the state-of-the-art methods like RippleNet and KGAT. 
+Remarkably, JNSKR also shows significant advantages in training efficiency (about 20 times faster than KGAT), 
+which makes it more applicable to real-world large-scale systems.
