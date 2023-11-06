@@ -21,7 +21,7 @@
 
     ],
     "ner":[
-      "ORG"
+      "COLOR"
     ]
   },
   "pipeline":[
@@ -40,13 +40,13 @@
     "ents_p":1.0,
     "ents_r":1.0,
     "ents_per_type":{
-      "ORG":{
+      "COLOR":{
         "p":1.0,
         "r":1.0,
         "f":1.0
       }
     },
-    "tok2vec_loss":0.0000000005,
-    "ner_loss":0.0000000008
+    "tok2vec_loss":0.0000000001,
+    "ner_loss":0.0000000001
   }
 }
