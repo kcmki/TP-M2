@@ -1,0 +1,9 @@
+{
+  "label_smoothing":0.0,
+  "labels":[
+    "ORG",
+    "any"
+  ],
+  "neg_prefix":"!",
+  "overwrite":false
+}
