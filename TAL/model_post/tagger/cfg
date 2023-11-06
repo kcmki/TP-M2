@@ -1,7 +1,7 @@
 {
   "label_smoothing":0.0,
   "labels":[
-    "ORG",
+    "NNS",
     "any"
   ],
   "neg_prefix":"!",
