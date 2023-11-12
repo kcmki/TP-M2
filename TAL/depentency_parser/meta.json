@@ -18,15 +18,13 @@
   },
   "labels":{
     "parser":[
+      "-",
       "ROOT",
-      "cc",
-      "compound",
-      "conj",
+      "adj",
       "dep",
-      "dobj",
-      "nmod",
-      "nsubj",
-      "punct"
+      "det",
+      "prep",
+      "quantity"
     ]
   },
   "pipeline":[
