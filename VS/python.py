@@ -11,7 +11,7 @@ if img is None:
 
 img[:] = img[:] / 3
 w,h = img.shape
-
+print(img.shape)
 min,max = 255,0
 
 
