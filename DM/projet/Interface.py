@@ -167,7 +167,7 @@ def dataset2():
         Set2.testByPopu()
         st.pyplot()
     st.sidebar.markdown("---")
-    numberOfZones = st.sidebar.number_input("Chose a number of zones", step=1, value=0, format="%d",max_value=Set2.data["zcta"].nunique(),min_value=0)
+    numberOfZones = st.sidebar.number_input("Chose a number of zones", step=1, value=1, format="%d",max_value=Set2.data["zcta"].nunique(),min_value=1)
     if st.sidebar.button("Nombre de cas selon la population"):
         Set2.mostAffectedZone(count=numberOfZones)
         st.pyplot()
