@@ -9,20 +9,22 @@ import itertools
 import math
 import pandas as pd
 
-def calculate_intervals_Brooks_Carruthers(n):
-    K = int(5 * math.log10(n))
-    return K
+import math
 
-def calculate_intervals_Huntsberger(n):
-    K = int(1 + (math.log10(n) *10 / 3))
-    return K
+def calculate_intervals(n, method='Brooks Carruthers'): # n = nombre d'observations
 
-def calculate_intervals_Sturges(n):
-    K = int(math.log2(n + 1))
+    if method == 'Brooks Carruthers':
+        K = int(5 * math.log10(n))
+    elif method == 'Huntsberger':
+        K = int(1 + (math.log10(n) * 10 / 3))
+    elif method == 'Sturges':
+        K = int(math.log2(n + 1))
+
     return K
 
 def interval_amplitude(data):
     return data.max() - data.min()
+
 
 def discretisation_par_amplitude_column(data, nombre_intervalles ):
     intervalles = []
@@ -45,40 +47,40 @@ def discretisation_par_taille_column(data, nombre_intervalles):
     intervalles.append(data.max())
     return intervalles
 
-def dataset_to_discret(data, type_discretisation = 'amplitude'):
-    discret_data = pd.DataFrame()
-    for i in data.columns:
-        print ("i",i)
-        if (data[i].dtype == 'float64'):
-            if (type_discretisation == 'amplitude'):
-                a = discretisation_par_amplitude_column(data[i])
-            else:
-                a = discretisation_par_taille_column(data[i])
-            a = round   (a, 2)
-            discret_data[i] = a
-    print (discret_data)
-    return discret_data
 
-def dataset_to_discret(data, intervalles):
-    # Parcourir les lignes du DataFrame
-    data['Rainfall'] = data['Rainfall'].astype(str) 
-    data['Humidity'] = data['Humidity'].astype(str) 
-    data['Temperature'] = data['Temperature'].astype(str) 
-    for i in range(len(data)):
-        # Parcourir les colonnes du DataFrame
-        for j in range(len(intervalles)):
-            # Parcourir les intervalles pour la colonne actuelle
-            for k in range(len(intervalles[j])):
-                # Vérifier si la valeur se trouve dans l'intervalle
-                if float(data.iloc[i, j]) <= intervalles[j][k]:
-                    # Assigner la valeur minimale de l'intervalle
-                    str_column = str(data.columns[j])[0]
-                    str_value = str(intervalles[j][k-1] )
-                    
-                    # Explicitly cast to a compatible dtype (e.g., str)
-                    data.iloc[i, j] = str(str_column) + str(str_value)
-                    break
+def dataset_to_discret(data, intervalles_type='fréquence egale', nombre_intervalles=10, collonne1=False, collonne2=False, collonne3=False):
+    collones_to_discretise = []
+    if collonne1:
+        collones_to_discretise.append('Rainfall')
+    if collonne2:
+        collones_to_discretise.append('Humidity')
+    if collonne3:
+        collones_to_discretise.append('Temperature')
+
+    for collone in collones_to_discretise:
+        if intervalles_type == 'largeur egale':
+            intervalles = discretisation_par_amplitude_column(data[collone], nombre_intervalles)
+        else:
+            intervalles = discretisation_par_taille_column(data[collone], nombre_intervalles)
+        
+        print("colonne ", collone)
+        print("intervalles ", intervalles)
+
+        for i in range(len(data)):
+            for j in range(len(intervalles)):
+                if float(data.loc[i, collone]) <= intervalles[j]:
+                    data.loc[i, collone] = intervalles[j]
+                    break  # Ajout de cette instruction pour éviter la comparaison inutile après avoir trouvé l'intervalle approprié
+
+    # Convertir les colonnes en type str
+    data['Rainfall'] = data['Rainfall'].astype(str)
+    data['Humidity'] = data['Humidity'].astype(str)
+    data['Temperature'] = data['Temperature'].astype(str)
+
+    print(data)
     return data
+
+
 def transaction_to_item(transaction_data):
     # Crée un dictionnaire pour compter le nombre d'occurrences de chaque élément
     dict_item = {}
