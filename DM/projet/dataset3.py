@@ -360,9 +360,9 @@ def nombre_regle_confiane(confiance, Min_Conf):
 def fct_recommendation (antecedant, consesquant):
     conseil = ""
     if consesquant == ('rice'):
-        conseil = str(antecedant) + "Favorise le riz"
+        conseil = str(antecedant) + " Favorise le riz"
         
     if consesquant == ('Coconut'):
-        conseil = str(antecedant) + "Favorise la noix de coco"
+        conseil = str(antecedant) + " Favorise la noix de coco"
     
     return conseil

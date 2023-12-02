@@ -250,7 +250,7 @@ def dataset3():
         st.write(rules)
 
         confiance, lift, cosine, recommendation = calcul_confiance(rule_list, appriorie_dict,list_data3, min_confiance=minconfiance/100)
-
+        print (recommendation)
         confiance = pd.DataFrame(list(confiance.items()), columns=['Régle', 'Confiance'])
         lift = pd.DataFrame(list(lift.items()), columns=['Régle', 'Lift'])
         cosine = pd.DataFrame(list(cosine.items()), columns=['Régle', 'Cosine'])
