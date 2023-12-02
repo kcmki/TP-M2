@@ -11,10 +11,11 @@ import streamlit as st
 import datetime as dt
 import pandas as pd
 from dateutil.relativedelta import relativedelta 
+from dataset3 import Apriori, calcul_confiance, calculate_intervals_Brooks_Carruthers,calculate_intervals_Huntsberger,calculate_intervals_Sturges, dataset_to_discret, discretisation_par_amplitude_column, discretisation_par_taille_column, generate_association_rules, get_items
 
 data1 = pd.read_csv('Data/Dataset1.csv')
 data2 = pd.read_csv('Data/Dataset2_correct.csv')
-
+data3 = pd.read_excel('Data/Dataset3up.xlsx')
 
 
 def dataset1():
@@ -190,18 +191,114 @@ def dataset2():
         st.pyplot()
     #selected_range = st.slider("Select a Range of Values", min_value, max_value, default_range)
 
+def dataset3():
+    global data3
+    intervale_option = st.sidebar.selectbox("methode de discrétisation", ["Brooks Carruthers", "Huntsberger","Sturges"])
+    disc_option = st.sidebar.selectbox("methode de discrétisation", ["fréquence egale", "largeur egale"])
+    columns = st.sidebar.multiselect("choix des colonnes", data3.columns[:3])
+    discretiser = st.sidebar.checkbox("Discretiser")
+    if discretiser:
+        if intervale_option == "Brooks Carruthers":
+            k = calculate_intervals_Brooks_Carruthers(data3.shape[0])
+        elif intervale_option == "Huntsberger":
+            k = calculate_intervals_Huntsberger(data3.shape[0])
+        else:
+            k = calculate_intervals_Sturges(data3.shape[0])
+
+        intervalles = []
+        if disc_option == "fréquence egale":
+            for col in columns:
+                intervalles.append(discretisation_par_amplitude_column(data3[col], k))
+        else:
+            for col in columns:
+                intervalles.append(discretisation_par_taille_column(data3[col], k))
+
+        data3 = dataset_to_discret(data3, intervalles)
+
+    list_data3 = data3.values.tolist()
+
+    st.sidebar.markdown("---") 
+
+    if st.sidebar.button("Show data"):
+        st.write(data3)
+
+    st.sidebar.markdown("---")
+    threshhold= st.sidebar.slider("Select a Range of Values in percent", 0, 100, 50)
+    minconfiance = st.sidebar.slider("select min confiance", 0, 100, 50,on_change=None)
+
+    if st.sidebar.button("Apriori"):
+
+        appriorie_dict = Apriori(list_data3,Min_Supp_percent =(threshhold/100))
+        apprioried = pd.DataFrame(appriorie_dict)
+
+        apprioried = apprioried.applymap(lambda x: 0 if not pd.to_numeric(x, errors='coerce') else x)
+        apprioried['Fréquence terme'] = apprioried.sum(axis=1)
+        apprioried = apprioried["Fréquence terme"]
+        st.write("Fréquence terme")
+        st.write(apprioried)
+        rule_list = get_items(appriorie_dict)
+        rules = generate_association_rules(rule_list)
+        st.write("Régles possible")
+        rules = pd.DataFrame(rules)
+        # Define a dictionary with the new column names
+        new_column_names = {0: 'Antécedent',
+                            1: 'Conséquent'}
+        # Rename the columns using the rename method
+        rules = rules.rename(columns=new_column_names)
+        st.write(rules)
+
+        confiance, lift, cosine = calcul_confiance(rule_list, appriorie_dict,list_data3, min_confiance=minconfiance/100)
+
+        confiance = pd.DataFrame(list(confiance.items()), columns=['Régle', 'Confiance'])
+        lift = pd.DataFrame(list(lift.items()), columns=['Régle', 'Lift'])
+        cosine = pd.DataFrame(list(cosine.items()), columns=['Régle', 'Cosine'])
+
+        st.write("Mesures de correlation")
+        result_df = pd.concat([confiance, lift["Lift"], cosine["Cosine"]], axis=1)
+        st.write(result_df)
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Ajouter une observation") or st.session_state.add_observation:
+        st.session_state.add_observation = True
+        st.empty()
+        st.write("Ajouter une observation")
+        temperature = st.number_input ("temperature",step=0.01, min_value=-20.0, max_value=60.0,value=20.0)
+        humidity = st.number_input ("humidity",step=0.01, min_value=0.0, max_value=100.0,value=80.0)
+        Rainfall = st.number_input ("Rainfall",step=0.01,value=220.0)
+        soil = st.selectbox("Soil", data3["Soil"].unique())
+        crop = st.selectbox("Crop", data3["Crop"].unique())
+        Fertilizer = st.selectbox("Fertilizer", data3["Fertilizer"].unique())
+        if st.button("Ajouter"):
+            new_observation = {'Temperature': temperature,
+                            'Humidity': humidity,
+                            'Rainfall': Rainfall,
+                            'Soil': soil,
+                            'Crop': crop,
+                            'Fertilizer': Fertilizer}
+            # Append the new observation to the DataFrame
+            data3.loc[len(data3)] = new_observation
+            st.write("Nouvelle observation ajoutée:")
+            st.write(data3.iloc[-1])  # Display the last row
+
+            # Save the updated DataFrame to Excel
+            data3.to_excel('Data/Dataset3up.xlsx', index=False)
+            st.session_state.add_observation = False
+           
+            
+
 
 
 def main():
     st.title("Data Preprocessing and Analysis")
 
     st.sidebar.title("Navigation")
-    selected_page = st.sidebar.radio("Select Dataset", ["Dataset1", "Dataset2"])
+    selected_page = st.sidebar.radio("Select Dataset", ["Dataset1", "Dataset2","Dataset3"])
 
     if selected_page == "Dataset1":
         dataset1()
-    else:
+    elif selected_page == "Dataset2":
         dataset2()
+    else:
+        dataset3()
 
 
 if __name__ == "__main__":
