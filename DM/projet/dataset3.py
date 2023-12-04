@@ -9,76 +9,73 @@ import itertools
 import math
 import pandas as pd
 
-def calculate_intervals_Brooks_Carruthers(n):
-    K = int(5 * math.log10(n))
-    return K
+import math
 
-def calculate_intervals_Huntsberger(n):
-    K = int(1 + (math.log10(n) *10 / 3))
-    return K
+def calculate_intervals(n, method='Brooks Carruthers'): # n = nombre d'observations
 
-def calculate_intervals_Sturges(n):
-    K = int(math.log2(n + 1))
+    if method == 'Brooks Carruthers':
+        K = int(5 * math.log10(n))
+    elif method == 'Huntsberger':
+        K = int(1 + (math.log10(n) * 10 / 3))
+    elif method == 'Sturges':
+        K = int(math.log2(n + 1))
+
     return K
 
 def interval_amplitude(data):
     return data.max() - data.min()
 
-def discretisation_par_amplitude_column(data, nombre_intervalles ):
-    intervalles = []
-    intervalles.append(data.min())
-    for i in range(1, nombre_intervalles):
-        a = data.min() + i * interval_amplitude(data) / nombre_intervalles
-        a = round(a, 2)
-        intervalles.append(a)
-    intervalles.append(data.max())
-    return intervalles
 
+def discretisation_distance_egale(data, column, nombre_intervalles):
+    # Calcul de la largeur des intervalles
+    interval_width = (data[column].max() - data[column].min()) / nombre_intervalles
+    
+    # Définition des points de coupure pour les intervalles
+    bins = [data[column].min() + i * interval_width for i in range(nombre_intervalles + 1)]
+    
+    # Utilisation de pd.cut pour discrétiser en intervalles de distance égale
+    temp = pd.cut(data[column], bins=bins, precision=2)
+    temp = temp.apply(lambda x: x.left)
+    data[column] = temp
 
-def discretisation_par_taille_column(data, nombre_intervalles):
-    intervalles = []
-    intervalles.append(data.min())
-    for i in range(1, nombre_intervalles):
-        a = data.quantile(i / nombre_intervalles)
-        a = round(a, 2)
-        intervalles.append(a)
-    intervalles.append(data.max())
-    return intervalles
-
-def dataset_to_discret(data, type_discretisation = 'amplitude'):
-    discret_data = pd.DataFrame()
-    for i in data.columns:
-        print ("i",i)
-        if (data[i].dtype == 'float64'):
-            if (type_discretisation == 'amplitude'):
-                a = discretisation_par_amplitude_column(data[i])
-            else:
-                a = discretisation_par_taille_column(data[i])
-            a = round   (a, 2)
-            discret_data[i] = a
-    print (discret_data)
-    return discret_data
-
-def dataset_to_discret(data, intervalles):
-    # Parcourir les lignes du DataFrame
-    data['Rainfall'] = data['Rainfall'].astype(str) 
-    data['Humidity'] = data['Humidity'].astype(str) 
-    data['Temperature'] = data['Temperature'].astype(str) 
-    for i in range(len(data)):
-        # Parcourir les colonnes du DataFrame
-        for j in range(len(intervalles)):
-            # Parcourir les intervalles pour la colonne actuelle
-            for k in range(len(intervalles[j])):
-                # Vérifier si la valeur se trouve dans l'intervalle
-                if float(data.iloc[i, j]) <= intervalles[j][k]:
-                    # Assigner la valeur minimale de l'intervalle
-                    str_column = str(data.columns[j])[0]
-                    str_value = str(intervalles[j][k-1] )
-                    
-                    # Explicitly cast to a compatible dtype (e.g., str)
-                    data.iloc[i, j] = str(str_column) + str(str_value)
-                    break
     return data
+
+
+def discretisation_egal_nombre_elements(data, column, nombre_intervalles):
+    # Utilisation de pd.qcut pour discrétiser en intervalles avec le même nombre d'éléments
+    temp = pd.qcut(data[column], q=nombre_intervalles , precision=2)
+    temp = temp.apply(lambda x: x.left)
+    data[column] = temp
+    
+    # Si vous voulez obtenir les valeurs des intervalles, vous pouvez également utiliser la fonction cut
+    # data['discretised_' + column] = pd.cut(data[column], bins=nombre_intervalles, labels=False)
+    
+    return data
+
+
+def dataset_to_discret(data, intervalles_type='fréquence egale', nombre_intervalles=10, collonne1=False, collonne2=False, collonne3=False):
+    collones_to_discretise = []
+    if collonne1:
+        collones_to_discretise.append('Rainfall')
+    if collonne2:
+        collones_to_discretise.append('Humidity')
+    if collonne3:
+        collones_to_discretise.append('Temperature')
+
+    for collone in collones_to_discretise:
+        if intervalles_type == 'largeur egale':
+            intervalles = discretisation_distance_egale(data,collone, nombre_intervalles)
+            print ("largeur egale")
+            print (intervalles)
+        else:
+            intervalles = discretisation_egal_nombre_elements(data,collone, nombre_intervalles)
+            print ("fréquence egale")
+            print (intervalles)
+
+      
+    return data
+
+
 def transaction_to_item(transaction_data):
     # Crée un dictionnaire pour compter le nombre d'occurrences de chaque élément
     dict_item = {}
@@ -302,7 +299,7 @@ def calcul_confiance(rules, result_dict,list_data3, min_confiance = 0.1):
     confiance = {}
     lift = {}
     cosine = {}
-
+    recommendation = []
     for rule in rules:
         
         A = rule[0]
@@ -324,12 +321,14 @@ def calcul_confiance(rules, result_dict,list_data3, min_confiance = 0.1):
                 calcul =  calculate_metrics(Supp_A_u_B, Supp_A, Supp_A, len(list_data3), calcul_taille_tuple(A), calcul_taille_tuple(B))
                 if (calcul [0] >= min_confiance):
                     confiance[A, B],lift[A, B], cosine[A, B]  = calcul
+                    if fct_recommendation(A,B) != "":
+                        recommendation.append (fct_recommendation(A,B))
 
 
                 
 
 
-    return confiance, lift, cosine
+    return confiance, lift, cosine, recommendation
         
 
 def afficher_lift (lift, seuille):
@@ -357,3 +356,13 @@ def nombre_regle_confiane(confiance, Min_Conf):
         if confiance[i] >= Min_Conf:
             nombre += 1
     return nombre
+
+def fct_recommendation (antecedant, consesquant):
+    conseil = ""
+    if consesquant == ('rice'):
+        conseil = str(antecedant) + " Favorise le riz"
+        
+    if consesquant == ('Coconut'):
+        conseil = str(antecedant) + " Favorise la noix de coco"
+    
+    return conseil
