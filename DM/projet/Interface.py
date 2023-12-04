@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from dataset3 import Apriori, calcul_confiance, calculate_intervals_Brooks_Carruthers,calculate_intervals_Huntsberger,calculate_intervals_Sturges, dataset_to_discret, discretisation_par_amplitude_column, discretisation_par_taille_column, generate_association_rules, get_items
 
 data1 = pd.read_csv('Data/Dataset1.csv')
-data2 = pd.read_csv('Data/Dataset2_correct.csv')
+data2 = pd.read_csv('Data/Dataset2_correct.csv',index_col=0)
 data3 = pd.read_excel('Data/Dataset3up.xlsx')
 
 
@@ -131,7 +131,7 @@ def dataset2():
     # Dropdowns for preprocessing options
     null_option = st.sidebar.selectbox("Handle Null Values", ["drop", "mean"])
     outliers_option = st.sidebar.selectbox("Handle Outliers", [None, "drop", "mean", "median", "Q1Q3"])
-    normalization_option = st.sidebar.selectbox("Normalization", [None, "minmax", "zscore"])
+    normalization_option = st.sidebar.selectbox("Normalization", [None, "minmax"])
     
     ignore_list = st.sidebar.multiselect("Ignore List for processing", Set2.data.columns,default=["Start date","end date","time_period","population","zcta"])
     Set2.preprocessData(null=null_option,outliers=outliers_option,normalisation=normalization_option,ignore=ignore_list)
@@ -192,6 +192,8 @@ def dataset2():
     #selected_range = st.slider("Select a Range of Values", min_value, max_value, default_range)
 
 def dataset3():
+    if not 'add_observation' in st.session_state:
+        st.session_state.add_observation = False
     global data3
     intervale_option = st.sidebar.selectbox("methode de discrétisation", ["Brooks Carruthers", "Huntsberger","Sturges"])
     disc_option = st.sidebar.selectbox("methode de discrétisation", ["fréquence egale", "largeur egale"])
@@ -220,6 +222,7 @@ def dataset3():
     st.sidebar.markdown("---") 
 
     if st.sidebar.button("Show data"):
+        st.session_state.add_observation = False
         st.write(data3)
 
     st.sidebar.markdown("---")
@@ -227,7 +230,7 @@ def dataset3():
     minconfiance = st.sidebar.slider("select min confiance", 0, 100, 50,on_change=None)
 
     if st.sidebar.button("Apriori"):
-
+        st.session_state.add_observation = False
         appriorie_dict = Apriori(list_data3,Min_Supp_percent =(threshhold/100))
         apprioried = pd.DataFrame(appriorie_dict)
 
@@ -283,8 +286,6 @@ def dataset3():
             data3.to_excel('Data/Dataset3up.xlsx', index=False)
             st.session_state.add_observation = False
            
-            
-
 
 
 def main():
