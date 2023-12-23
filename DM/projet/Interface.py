@@ -4,14 +4,14 @@ from matplotlib import pyplot as plt
 from pandas.plotting import scatter_matrix
 
 import streamlit as st
-from dataset import Dataset, Dataset2
+from DM.projet.lib.dataset import Dataset, Dataset2
 import plotly.express as px
 
 import streamlit as st
 import datetime as dt
 import pandas as pd
 from dateutil.relativedelta import relativedelta 
-from dataset3 import Apriori, calcul_confiance, calculate_intervals, dataset_to_discret, generate_association_rules, get_items
+from DM.projet.lib.dataset3 import Apriori, calcul_confiance, calculate_intervals, dataset_to_discret, generate_association_rules, get_items
 
 data1 = pd.read_csv('Data/Dataset1.csv')
 data2 = pd.read_csv('Data/Dataset2_correct.csv',index_col=0)

@@ -214,7 +214,6 @@ class Dataset:
     def resetData(self):
         self.data = self.default.copy()
 
-
 class Dataset2(Dataset):
 
     def deleteNull(self,dtype="drop",ignore=None):
