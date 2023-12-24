@@ -4,18 +4,21 @@ from matplotlib import pyplot as plt
 from pandas.plotting import scatter_matrix
 
 import streamlit as st
-from DM.projet.lib.dataset import Dataset, Dataset2
+from lib.dataset import Dataset, Dataset2
 import plotly.express as px
 
 import streamlit as st
 import datetime as dt
 import pandas as pd
 from dateutil.relativedelta import relativedelta 
-from DM.projet.lib.dataset3 import Apriori, calcul_confiance, calculate_intervals, dataset_to_discret, generate_association_rules, get_items
+from lib.dataset3 import Apriori, calcul_confiance, calculate_intervals, dataset_to_discret, generate_association_rules, get_items
+from lib.Classification import Classification
+import pickle
 
 data1 = pd.read_csv('Data/Dataset1.csv')
 data2 = pd.read_csv('Data/Dataset2_correct.csv',index_col=0)
 data3 = pd.read_excel('Data/Dataset3up.xlsx')
+classificateur = pickle.load(open("./lib/classificateur.p", 'rb'))
 
 
 def dataset1():
@@ -130,7 +133,7 @@ def dataset2():
     Set2.uniquesData("zcta")
     # Dropdowns for preprocessing options
     null_option = st.sidebar.selectbox("Handle Null Values", ["drop", "mean"])
-    outliers_option = st.sidebar.selectbox("Handle Outliers", [None, "drop", "mean", "median", "Q1Q3"])
+    outliers_option = st.sidebar.selectbox("Handle Outliers", [None, "drop"])
     normalization_option = st.sidebar.selectbox("Normalization", [None, "minmax"])
     
     ignore_list = st.sidebar.multiselect("Ignore List for processing", Set2.data.columns,default=["Start date","end date","time_period","population","zcta"])
@@ -169,7 +172,7 @@ def dataset2():
         st.pyplot()
     st.sidebar.markdown("---")
     numberOfZones = st.sidebar.number_input("Chose a number of zones", step=1, value=1, format="%d",max_value=Set2.data["zcta"].nunique(),min_value=1)
-    if st.sidebar.button("Nombre de cas selon la population"):
+    if st.sidebar.button("Les zones les plus impacté"):
         Set2.mostAffectedZone(count=numberOfZones)
         st.pyplot()
     st.sidebar.markdown("---")
@@ -253,7 +256,7 @@ def dataset3():
         st.write(rules)
 
         confiance, lift, cosine, recommendation = calcul_confiance(rule_list, appriorie_dict,list_data3, min_confiance=minconfiance/100)
-        print (recommendation)
+
         confiance = pd.DataFrame(list(confiance.items()), columns=['Régle', 'Confiance'])
         lift = pd.DataFrame(list(lift.items()), columns=['Régle', 'Lift'])
         cosine = pd.DataFrame(list(cosine.items()), columns=['Régle', 'Cosine'])
@@ -290,6 +293,97 @@ def dataset3():
             data3.to_excel('Data/Dataset3up.xlsx', index=False)
             st.session_state.add_observation = False
            
+def supervised():
+
+    st.sidebar.markdown("---")
+    st.sidebar.header("Classification tests using test data")
+    if st.sidebar.button("Test Decision Tree"):
+        st.session_state.add_observation_superv = False
+        treeResult = classificateur.testDecisionTree()
+
+        st.write("Test Decision Tree")
+        mat = classificateur.confMatrix(treeResult)
+        st.write(mat)
+        metrics = classificateur.getMetrics(mat)
+        st.write(pd.DataFrame(metrics))
+
+    if st.sidebar.button("Test Knn"):
+        st.session_state.add_observation_superv = False
+        KnnResult = classificateur.testKnn()
+
+        st.write("Test Knn")
+        mat = classificateur.confMatrix(KnnResult)
+        st.write(mat)
+        metrics = classificateur.getMetrics(mat)
+        st.write(pd.DataFrame(metrics))
+
+    if st.sidebar.button("Test Random forest"):
+        st.session_state.add_observation_superv = False
+        randomForestResult = classificateur.testRandomForest()
+
+        st.write("Test Random forest")
+        mat = classificateur.confMatrix(randomForestResult)
+        st.write(mat)
+        metrics = classificateur.getMetrics(mat)
+        st.write(pd.DataFrame(metrics))
+
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Insertion de données") or st.session_state.add_observation_superv:
+        classificationAlgo = st.selectbox("Select a classifier", ["Decision tree", "Knn", "Random forest"])
+        st.session_state.add_observation_superv = True
+        st.empty()
+        st.markdown("---")
+        st.write("Ajouter une observation")
+        item = []
+        dictitem = {}
+        columns = 4
+        cols = st.columns(columns)
+        for nb,i in enumerate(data1.columns[:-1]):
+            with cols[nb%columns]:
+                item.append(st.number_input (i,step=0.01,value=0.0))
+                dictitem[str(i)] = item[nb]
+        st.table(dictitem)
+        st.markdown("---")
+        st.write("Parameters")
+        oldDepth = 10
+        oldminSplit = 2
+        oldRandn_trees = 100
+        oldRandDepth = 10
+        oldRandminSplit = 2
+        match classificationAlgo:
+            case "Knn":
+                Kinput = st.number_input("K",step=1,value=2,min_value=1)
+                distanceAlgo = st.selectbox("Distance", ["euclidienne", "manhattan","minkowski","cosine","hamming"])
+            case "Decision tree":
+                Depth = st.number_input("Depth",step=1,value=10,min_value=1)
+                minSplit = st.number_input("minSplit",step=1,value=2,min_value=2)
+
+            case "Random forest":
+                n_trees = st.number_input("n_trees",step=1,value=100,min_value=1)
+                Depth = st.number_input("Depth",step=1,value=10,min_value=1)
+                minSplit = st.number_input("minSplit",step=1,value=2,min_value=2)
+
+        if st.button("predict"):
+            match classificationAlgo:
+                case "Decision tree":
+                    if Depth != oldDepth and minSplit != oldminSplit:
+                        st.write("Entrainement...")
+                        classificateur.trainDecisionTree(maxDepth=Depth,minSamplesSplit=minSplit)
+                        st.write("Entrainement terminé")
+                    st.write("Prediction")
+                    st.write(list(classificateur.tree.predict([item]))[0])
+                case "Knn":
+                    st.write("Prediction")
+                    st.write(classificateur.knn.getClass(list(item),algo=distanceAlgo,k=Kinput))
+                case "Random forest":
+                    if Depth != oldRandDepth and minSplit != oldRandminSplit and n_trees != oldRandn_trees:
+                        st.write("Entrainement...")
+                        classificateur.trainRandomForest(n_tree=n_trees,maxDepth=Depth,minSamplesSplit=minSplit)
+                        st.write("Entrainement terminé")
+                    st.write("Prediction")
+                    dictitem["Fertility"] = 0
+                    st.write(classificateur.testRandomForest(data=pd.DataFrame(dictitem,index=[13]))[0])
+
 
 
 def main():
@@ -297,14 +391,24 @@ def main():
     st.title("Data Preprocessing and Analysis")
 
     st.sidebar.title("Navigation")
-    selected_page = st.sidebar.radio("Select Dataset", ["Dataset1", "Dataset2","Dataset3"])
-
-    if selected_page == "Dataset1":
-        dataset1()
-    elif selected_page == "Dataset2":
-        dataset2()
+    selected_part = st.sidebar.radio("Select Part", ["Part1", "Part2"])
+    
+    if selected_part == "Part1":
+        st.session_state.add_observation_superv = False
+        selected_page = st.sidebar.radio("Select Dataset", ["Dataset1", "Dataset2","Dataset3"])
+        if selected_page == "Dataset1":
+            dataset1()
+        elif selected_page == "Dataset2":
+            dataset2()
+        else:
+            dataset3()
     else:
-        dataset3()
+        selected_type = st.sidebar.radio("Select type", ["Analyse supervisée", "Analyse non supervisée"])
+        if selected_type == "Analyse supervisée":
+            st.write("Analyse supervisée")
+            supervised()
+        else:
+            st.write("Analyse non supervisée")
 
 
 if __name__ == "__main__":

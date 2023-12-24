@@ -33,15 +33,18 @@ class decisionTree:
             #trouver le meilleur split
             bestSplit = self.BestSplit(data,numSamples,numFeatures)
             #verifier si l'information gain est positive
-            if bestSplit["infoGain"] > 0:
-                #construire les sous arbres
-                leftSubTree = self.buildTree(bestSplit["data_left"],curr_depth+1)
-                rightSubTree = self.buildTree(bestSplit["data_right"],curr_depth+1)
-                return Node(threshold=bestSplit["threshold"],
-                            featureIndex=bestSplit["featureIndex"],
-                            left=leftSubTree,
-                            right=rightSubTree,
-                            infoGain=bestSplit["infoGain"])
+            try:
+                if bestSplit["infoGain"] > 0:
+                    #construire les sous arbres
+                    leftSubTree = self.buildTree(bestSplit["data_left"],curr_depth+1)
+                    rightSubTree = self.buildTree(bestSplit["data_right"],curr_depth+1)
+                    return Node(threshold=bestSplit["threshold"],
+                                featureIndex=bestSplit["featureIndex"],
+                                left=leftSubTree,
+                                right=rightSubTree,
+                                infoGain=bestSplit["infoGain"])
+            except:
+                pass
 
         leafValue = self.calculateLeafValue(y)
         return Node(value=leafValue)
