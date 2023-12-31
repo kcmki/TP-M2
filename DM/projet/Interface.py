@@ -13,6 +13,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta 
 from lib.dataset3 import Apriori, calcul_confiance, calculate_intervals, dataset_to_discret, generate_association_rules, get_items
 from lib.Classification import Classification
+from lib.clustering import Clustering
 import pickle
 
 data1 = pd.read_csv('Data/Dataset1.csv')
@@ -265,7 +266,6 @@ def dataset3():
         result_df = pd.concat([confiance, lift["Lift"], cosine["Cosine"]], axis=1)
         st.write(result_df)
     st.sidebar.markdown("---")
-    st.session_state.add_observation = False
     if st.sidebar.button("Ajouter une observation") or st.session_state.add_observation:
         st.session_state.add_observation = True
         st.empty()
@@ -302,8 +302,10 @@ def supervised():
         treeResult = classificateur.testDecisionTree()
 
         st.write("Test Decision Tree")
+        st.write("Matrice de confusion")
         mat = classificateur.confMatrix(treeResult)
         st.write(mat)
+        st.write("Métriques de performance")
         metrics = classificateur.getMetrics(mat)
         st.write(pd.DataFrame(metrics))
 
@@ -312,8 +314,10 @@ def supervised():
         KnnResult = classificateur.testKnn()
 
         st.write("Test Knn")
+        st.write("Matrice de confusion")
         mat = classificateur.confMatrix(KnnResult)
         st.write(mat)
+        st.write("Métriques de performance")
         metrics = classificateur.getMetrics(mat)
         st.write(pd.DataFrame(metrics))
 
@@ -322,8 +326,10 @@ def supervised():
         randomForestResult = classificateur.testRandomForest()
 
         st.write("Test Random forest")
+        st.write("Matrice de confusion")
         mat = classificateur.confMatrix(randomForestResult)
         st.write(mat)
+        st.write("Métriques de performance")
         metrics = classificateur.getMetrics(mat)
         st.write(pd.DataFrame(metrics))
 
@@ -384,7 +390,72 @@ def supervised():
                     dictitem["Fertility"] = 0
                     st.write(classificateur.testRandomForest(data=pd.DataFrame(dictitem,index=[13]))[0])
 
+def setUnsupervised(e):
+    st.session_state.clust = e
+def unsupervised():
+    st.sidebar.markdown("---")
+    null_option = st.sidebar.selectbox("Handle Null Values", ["drop", "mean"])
+    outliers_option = st.sidebar.selectbox("Handle Outliers", [None, "drop", "mean", "median", "Q1Q3"])
+    normalization_option = st.sidebar.selectbox("Normalization", [None, "minmax", "zscore"])
+    discretize  = st.sidebar.checkbox("Discretization")
+    
+    ds = Dataset(data1)
+    ds.preprocessData(null=null_option,outliers=outliers_option,normalisation=normalization_option)
+    if discretize:
+        ds.reduction(ignore=["Fertility"])
+    clusterer = Clustering(ds.data)
+    if st.sidebar.button("Show data"):
+        st.write(clusterer.data)
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Kmeans",on_click=setUnsupervised,args=["Kmeans"]) or st.session_state.clust =="Kmeans":
+        st.write("Kmeans")
+        DistanceKm = st.selectbox("Select distance kmeans", ["euclidienne", "manhattan","minkowski","cosine","hamming"])
+        K = st.number_input("K",step=1,value=2,min_value=1)
+        init = st.selectbox("Select init", ["random", "1/k"])
+        iteration = st.number_input("iter",step=1,value=100,min_value=1)
+        if st.button("run kmeans"):
+            st.write("Entrainement...")
+            clst,it = clusterer.kmeansClustering(K=K,itera=iteration,init=init,distance=DistanceKm)
+            st.write("Entrainement terminé a l'iteration ",it)
+            percent,matrice = clusterer.percent(clst)
+            cols = st.columns(2)
+            with cols[0]:
+                st.write("Matrice de confusion")
+                st.write(pd.DataFrame(matrice))
+                st.write("Inter cluster distance : ",clusterer.kmeans.interClusterDistance())
+                st.write("Intra cluster distance : ",clusterer.kmeans.intraClusterDistance())
+            with cols[1]:
+                st.write("Pourcentage de la classe dominante dans un cluster")
+                st.write(pd.DataFrame(percent))
+                st.write("silhouette : ",clusterer.silhouette(clst))
+                st.write("calinski : ",clusterer.calinski(clst))
+                st.write("davies : ",clusterer.davies(clst))
 
+            clusterer.drawScatter(clst)
+            st.pyplot()
+    
+    if st.sidebar.button("DBSCAN",on_click=setUnsupervised,args=["DBSCAN"]) or st.session_state.clust =="DBSCAN":
+        st.write("DBSCAN")
+        eps = st.number_input("eps",step=0.01,value=30.0,min_value=0.01)
+        min_samples = st.number_input("min_samples",step=1,value=15,min_value=1)
+        if st.button("run dbscan"):
+            st.write("Entrainement...")
+            clst = clusterer.dbscanClustering(eps=eps,minPts=min_samples)
+            st.write("Entrainement terminé")
+            percent,matrice = clusterer.percent(clst)
+            cols = st.columns(2)
+            with cols[0]:
+                st.write("Matrice de confusion")
+                st.write(pd.DataFrame(matrice))
+            with cols[1]:
+                st.write("Pourcentage de la classe dominante dans un cluster")
+                st.write(pd.DataFrame(percent))
+                st.write("silhouette : ",clusterer.silhouette(clst))
+                st.write("calinski : ",clusterer.calinski(clst))
+                st.write("davies : ",clusterer.davies(clst))
+            
+            clusterer.drawScatter(clst)
+            
 
 def main():
 
@@ -394,22 +465,32 @@ def main():
     selected_part = st.sidebar.radio("Select Part", ["Part1", "Part2"])
     
     if selected_part == "Part1":
-        st.session_state.add_observation_superv = False
+        st.session_state.kmeans = False
+        st.session_state.dbscan = False
+
         selected_page = st.sidebar.radio("Select Dataset", ["Dataset1", "Dataset2","Dataset3"])
         if selected_page == "Dataset1":
+            st.session_state.add_observation_superv = False
             dataset1()
         elif selected_page == "Dataset2":
+            st.session_state.add_observation_superv = False
             dataset2()
         else:
             dataset3()
     else:
+
         selected_type = st.sidebar.radio("Select type", ["Analyse supervisée", "Analyse non supervisée"])
         if selected_type == "Analyse supervisée":
+            st.session_state.kmeans = False
+            st.session_state.dbscan = False
             st.write("Analyse supervisée")
             supervised()
         else:
+            if "clust" not in st.session_state:
+                st.session_state.clust = ""
+            st.session_state.add_observation_superv = False
             st.write("Analyse non supervisée")
-
+            unsupervised()
 
 if __name__ == "__main__":
     st.set_option('deprecation.showPyplotGlobalUse', False)

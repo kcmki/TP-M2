@@ -86,24 +86,36 @@ class Knn:
     
         return distances
 
+    def getDistance(self,elem,algo="euclidienne"):
+        if algo == "euclidienne":
+            return self.euclidienne(data=elem)
+        if algo == "manhattan":
+            return self.manhattan(data=elem)
+        if algo == "minkowski":
+            return self.minkowski(data=elem)
+        if algo == "cosine":
+            return self.cosine(data=elem)
+        if algo == "hamming":
+            return self.hamming(data=elem)
+
     def getK(self,distances,k):
         return sorted(distances.items(), key=lambda t: t[1])[:k]
     
-    def getClass(self,elem,algo="euclidienne",k=3):
+    def getClass(self,elem,algo="euclidienne",k=3,distances=None):
         classes = {}
-
-        if algo == "euclidienne":
-            distances = self.euclidienne(data=elem)
-        if algo == "manhattan":
-            distances = self.manhattan(data=elem)
-        if algo == "minkowski":
-            distances = self.minkowski(data=elem)
-        if algo == "cosine":
-            distances = self.cosine(data=elem)
-        if algo == "hamming":
-            distances = self.hamming(data=elem)
-        
-        distances = self.getK(distances,k)
+        if distances is None:
+            if algo == "euclidienne":
+                distances = self.euclidienne(data=elem)
+            if algo == "manhattan":
+                distances = self.manhattan(data=elem)
+            if algo == "minkowski":
+                distances = self.minkowski(data=elem)
+            if algo == "cosine":
+                distances = self.cosine(data=elem)
+            if algo == "hamming":
+                distances = self.hamming(data=elem)
+            
+            distances = self.getK(distances,k)
         
         for (i,dist) in distances:
 
@@ -112,5 +124,4 @@ class Knn:
             else:
                 classes[self.data[i][-1]] = 1
         classes = dict(sorted(classes.items(), key=lambda t: t[1],reverse=True))
-        
         return list(classes.keys())[0]

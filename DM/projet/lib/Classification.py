@@ -47,7 +47,7 @@ class Classification:
         pred = np.array(pred).reshape(-1,1)
 
         return pred
-    
+
     def trainRandomForest(self,n_tree=100,maxDepth=10,minSamplesSplit=2):
         self.randomTrees = []
 
@@ -108,5 +108,6 @@ class Classification:
             metrics[i]["precision"] = TP/(TP+FP)
             metrics[i]["recall"] = TP/(TP+FN)
             metrics[i]["accuracy"] = (TP+TN)/(TP+FP+FN+TN)
+            metrics[i]["specificity"] = TN/(TN+FP)
             metrics[i]["f1"] = 2*(metrics[i]["precision"]*metrics[i]["recall"])/(metrics[i]["precision"]+metrics[i]["recall"])
         return metrics

@@ -54,7 +54,7 @@ class decisionTree:
         y = list(y)
         return max(y,key=y.count)
 
-    def BestSplit(self,data,numSamples,numFeatures):
+    def BestSplit(self,data,numFeatures):
         #initialiser les variables
         bestSplit = {}
         maxInfoGain = -float("inf")
@@ -85,7 +85,7 @@ class decisionTree:
         data_right = np.array([row for row in data if row[feature] > threshold])
         return data_left,data_right
     
-    def infoGain(self,parent,left,right,criterion="gini"):
+    def infoGain(self,parent,left,right):
         #calculer l'information gain
         weight_p = len(parent)
         weight_l,weight_r = len(left),len(right)
@@ -106,10 +106,12 @@ class decisionTree:
     def fit(self,X,y):
         data = np.concatenate((X,y),axis=1)
         self.root = self.buildTree(data)
+    
     def predict(self,X):
         #predire les classes
         preditions = [self.traverseTree(self.root,x) for x in X]
         return preditions
+    
     def traverseTree(self,node,x):
         if node.value != None:
             return node.value
@@ -118,3 +120,17 @@ class decisionTree:
             return self.traverseTree(node.left,x)
         else:
             return self.traverseTree(node.right,x)
+        
+    def printTree(self):
+        #afficher l'arbre
+        self.printNode(self.root)
+
+    def printNode(self,node,indent=""):
+        #afficher un noeud
+        if node.value != None:
+            print(indent+"Classe",str(node.value))
+        else:
+            print(indent+str(node.featureIndex))
+            print(indent+"Seuil",str(node.threshold))
+            self.printNode(node.left,indent+"  ")
+            self.printNode(node.right,indent+"  ")
