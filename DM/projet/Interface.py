@@ -392,6 +392,7 @@ def supervised():
 
 def setUnsupervised(e):
     st.session_state.clust = e
+
 def unsupervised():
     st.sidebar.markdown("---")
     null_option = st.sidebar.selectbox("Handle Null Values", ["drop", "mean"])
